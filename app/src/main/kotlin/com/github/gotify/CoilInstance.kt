@@ -9,6 +9,7 @@ import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.drawable.toDrawable
+import androidx.preference.PreferenceManager
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
 import coil.decode.DataSource
@@ -17,6 +18,7 @@ import coil.disk.DiskCache
 import coil.executeBlocking
 import coil.fetch.DrawableResult
 import coil.fetch.Fetcher
+import coil.request.CachePolicy
 import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.Options
@@ -31,7 +33,9 @@ import okhttp3.Response
 import org.tinylog.kotlin.Logger
 
 object CoilInstance {
-    private var holder: Pair<SSLSettings, ImageLoader>? = null
+    private data class Key(val sslSettings: SSLSettings, val lowDataMode: Boolean)
+
+    private var holder: Pair<Key, ImageLoader>? = null
 
     @Throws(IOException::class)
     fun getImageFromUrl(
@@ -78,22 +82,23 @@ object CoilInstance {
 
     @Synchronized
     fun get(context: Context): ImageLoader {
-        val newSettings = Settings(context).sslSettings()
+        val key = Key(
+            Settings(context).sslSettings(),
+            PreferenceManager.getDefaultSharedPreferences(context)
+                .getBoolean(context.getString(R.string.setting_key_low_data_mode), false)
+        )
         val copy = holder
-        if (copy != null && copy.first == newSettings) {
+        if (copy != null && copy.first == key) {
             return copy.second
         }
-        return makeImageLoader(context, newSettings).also { holder = it }.second
+        return makeImageLoader(context, key).also { holder = it }.second
     }
 
-    private fun makeImageLoader(
-        context: Context,
-        sslSettings: SSLSettings
-    ): Pair<SSLSettings, ImageLoader> {
+    private fun makeImageLoader(context: Context, key: Key): Pair<Key, ImageLoader> {
         val builder = OkHttpClient
             .Builder()
             .addInterceptor(BasicAuthInterceptor())
-        CertUtils.applySslSettings(builder, sslSettings)
+        CertUtils.applySslSettings(builder, key.sslSettings)
         val loader = ImageLoader.Builder(context)
             .okHttpClient(builder.build())
             .diskCache {
@@ -105,8 +110,13 @@ object CoilInstance {
                 add(SvgDecoder.Factory())
                 add(DataDecoderFactory())
             }
+            .apply {
+                if (key.lowDataMode) {
+                    networkCachePolicy(CachePolicy.DISABLED)
+                }
+            }
             .build()
-        return sslSettings to loader
+        return key to loader
     }
 }
 

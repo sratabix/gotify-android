@@ -40,8 +40,7 @@ internal class ListMessageAdapter(
     private val delete: Delete
 ) : ListAdapter<MessageWithImage, ListMessageAdapter.ViewHolder>(DiffCallback) {
     private val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-    private val lowDataMode = prefs.getBoolean(context.getString(R.string.setting_key_low_data_mode), false)
-    private val markwon: Markwon = MarkwonFactory.createForMessage(context, imageLoader, lowDataMode)
+    private val markwon: Markwon = MarkwonFactory.createForMessage(context, imageLoader)
 
     private val timeFormatRelative =
         context.resources.getString(R.string.time_format_value_relative)
@@ -82,18 +81,11 @@ internal class ListMessageAdapter(
             holder.message.text = message.message.message
         }
         holder.title.text = message.message.title
-        if (lowDataMode) {
-            holder.image.visibility = View.GONE
-        } else {
-            holder.image.visibility = View.VISIBLE
-            if (message.image != null) {
-                val url = Utils.resolveAbsoluteUrl("${settings.url}/", message.image)
-                holder.image.load(url, imageLoader) {
-                    error(R.drawable.ic_alarm)
-                    placeholder(R.drawable.ic_placeholder)
-                }
-            } else {
-                holder.image.setImageDrawable(null)
+        if (message.image != null) {
+            val url = Utils.resolveAbsoluteUrl("${settings.url}/", message.image)
+            holder.image.load(url, imageLoader) {
+                error(R.drawable.ic_alarm)
+                placeholder(R.drawable.ic_placeholder)
             }
         }
 
