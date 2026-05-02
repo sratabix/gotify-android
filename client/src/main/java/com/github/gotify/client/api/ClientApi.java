@@ -7,15 +7,18 @@ import retrofit2.http.*;
 
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
+import okhttp3.MultipartBody;
 
 import com.github.gotify.client.model.Client;
 import com.github.gotify.client.model.ClientParams;
+import com.github.gotify.client.model.ElevateRequest;
 import com.github.gotify.client.model.Error;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface ClientApi {
   /**
@@ -34,13 +37,27 @@ public interface ClientApi {
 
   /**
    * Delete a client.
-   * 
+   * Requires elevated authentication.
    * @param id the client id (required)
    * @return Call&lt;Void&gt;
    */
   @DELETE("client/{id}")
   Call<Void> deleteClient(
     @retrofit2.http.Path("id") Long id
+  );
+
+  /**
+   * Elevate a client session.
+   * Requires elevated authentication.
+   * @param body the elevation request (required)
+   * @return Call&lt;Void&gt;
+   */
+  @Headers({
+    "Content-Type:application/json"
+  })
+  @POST("client:elevate")
+  Call<Void> elevateClient(
+    @retrofit2.http.Body ElevateRequest body
   );
 
   /**
@@ -55,8 +72,8 @@ public interface ClientApi {
   /**
    * Update a client.
    * 
-   * @param body the client to update (required)
    * @param id the client id (required)
+   * @param body the client to update (required)
    * @return Call&lt;Client&gt;
    */
   @Headers({
@@ -64,7 +81,7 @@ public interface ClientApi {
   })
   @PUT("client/{id}")
   Call<Client> updateClient(
-    @retrofit2.http.Body ClientParams body, @retrofit2.http.Path("id") Long id
+    @retrofit2.http.Path("id") Long id, @retrofit2.http.Body ClientParams body
   );
 
 }

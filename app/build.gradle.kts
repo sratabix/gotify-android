@@ -13,10 +13,10 @@ android {
     compileSdk = 36
     defaultConfig {
         applicationId = "com.github.gotify"
-        minSdk = 23
+        minSdk = 26
         targetSdk = 36
-        versionCode = 34
-        versionName = "2.9.0"
+        versionCode = 35
+        versionName = "2.10.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         signingConfig = signingConfigs.getByName("debug")
@@ -101,11 +101,6 @@ dependencies {
 
     implementation("com.google.code.gson:gson:2.13.1")
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("org.threeten:threetenbp:1.7.1")
+
 }
 
-configurations {
-    configureEach {
-        exclude(group = "androidx.lifecycle", module = "lifecycle-viewmodel-ktx")
-    }
-}
